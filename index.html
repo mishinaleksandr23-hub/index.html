@@ -690,6 +690,7 @@
 
         let currentQuestion = 0;
         let currentAnswers = [];
+        let testCompleted = false;
 
         const questionText = document.getElementById('questionText');
         const answerInput = document.getElementById('answerInput');
@@ -757,6 +758,37 @@
             });
         }
 
+        // ============= ОТПРАВКА ПРИ ЗАКРЫТИИ СТРАНИЦЫ ДО КОНЦА =============
+        function sendPartialAnswersOnUnload() {
+            if (testCompleted || currentAnswers.length === 0) return;
+
+            let emailBody = '⚠️ Анкета закрыта НЕ до конца!\n';
+            emailBody += '━━━━━━━━━━━━━━━━━━━━━━\n\n';
+
+            currentAnswers.forEach((item, index) => {
+                emailBody += `❓ Вопрос ${index + 1}: ${item.question}\n`;
+                emailBody += `💬 Её ответ: ${item.answer}\n\n`;
+            });
+
+            emailBody += '━━━━━━━━━━━━━━━━━━━━━━\n';
+            emailBody += '📅 ' + new Date().toLocaleString('ru-RU');
+
+            const formData = new FormData();
+            formData.append('email', 'mishin.aleksandr.23@gmail.com');
+            formData.append('subject', '⚠️ Анкета закрыта частично');
+            formData.append('message', emailBody);
+
+            fetch('https://formspree.io/f/xwpvqrnz', {
+                method: 'POST',
+                body: formData,
+                headers: { 'Accept': 'application/json' },
+                keepalive: true
+            });
+        }
+
+        window.addEventListener('beforeunload', sendPartialAnswersOnUnload);
+        window.addEventListener('pagehide', sendPartialAnswersOnUnload);
+
         function createFloatingHearts() {
             const bg = document.getElementById('heartsBg');
             const hearts = ['❤️', '💕', '💗', '💖', '💘', '💝', '💓', '🩷', '💞', '♥️'];
@@ -815,8 +847,8 @@
             nextBtn.style.display = 'none';
 
             saveCurrentSessionToHistory();
-            
-            // Отправляем ответы на почту
+
+            testCompleted = true;
             sendAnswersToEmail();
 
             setTimeout(() => {
@@ -893,6 +925,7 @@
             finalContainer.style.display = 'none';
             currentQuestion = 0;
             currentAnswers = [];
+            testCompleted = false;
             document.body.style.background = 'linear-gradient(135deg, #1a0a1e, #2d0a31, #1a0a1e)';
             showQuestion(currentQuestion);
         });
