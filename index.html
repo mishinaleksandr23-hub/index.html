@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💕 Вопросики от Саши</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(135deg, #1a0a1e, #2d0a31, #1a0a1e);
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: background 1s ease;
+        }
+
+        /* Летающие сердечки на фоне */
+        .hearts-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .floating-heart {
+            position: absolute;
+            animation: floatHeart linear infinite;
+            opacity: 0.5;
+            font-size: 24px;
+        }
+
+        @keyframes floatHeart {
+            0% {
+                transform: translateY(105vh) rotate(0deg) scale(0.5);
+                opacity: 0;
+            }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.4; }
+            100% {
+                transform: translateY(-10vh) rotate(360deg) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        /* Секретное сердечко — чуть заметное */
+        .secret-heart {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            font-size: 32px;
+            opacity: 0.15;
+            cursor: pointer;
+            z-index: 999;
+            transition: all 0.4s ease;
+            animation: secretPulse 4s ease-in-out infinite;
+            filter: blur(0.5px);
+        }
+
+        .secret-heart:hover {
+            opacity: 0.9;
+            transform: scale(1.3);
+            filter: blur(0);
+            animation: none;
+            text-shadow: 0 0 25px rgba(255, 100, 150, 0.9);
+        }
+
+        @keyframes secretPulse {
+            0%, 100% { opacity: 0.12; transform: scale(1); }
+            50% { opacity: 0.22; transform: scale(1.08); }
+        }
+
+        /* Основной контейнер */
+        .main-container {
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 550px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 40px 30px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            animation: containerIn 0.6s ease;
+        }
+
+        @keyframes containerIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .header-emoji {
+            font-size: 60px;
+            animation: bounceEmoji 1.5s ease-in-out infinite;
+        }
+
+        @keyframes bounceEmoji {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        h1 {
+            color: #ff99cc;
+            font-size: 28px;
+            margin: 15px 0 5px;
+            text-shadow: 0 0 20px rgba(255, 153, 204, 0.5);
+        }
+
+        .subtitle {
+            color: #ccc;
+            font-size: 14px;
+            margin-bottom: 25px;
+            font-style: italic;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6699, #ff99cc);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .question-counter {
+            color: #aaa;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+
+        .question-text {
+            color: #fff;
+            font-size: 22px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            font-weight: bold;
+        }
+
+        .answer-input {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 17px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 153, 204, 0.3);
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            outline: none;
+            transition: all 0.3s;
+            font-family: 'Arial', sans-serif;
+            resize: none;
+        }
+
+        .answer-input:focus {
+            border-color: #ff6699;
+            box-shadow: 0 0 20px rgba(255, 102, 153, 0.3);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .answer-input::placeholder {
+            color: rgba(255, 255, 255, 0.35);
+            font-style: italic;
+        }
+
+        .btn {
+            padding: 14px 40px;
+            font-size: 18px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+
+        .next-btn {
+            margin-top: 20px;
+            background: linear-gradient(135deg, #ff6699, #ff3388);
+            color: white;
+        }
+
+        .next-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(255, 51, 136, 0.4);
+        }
+
+        .next-btn:active {
+            transform: scale(0.95);
+        }
+
+        .next-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Всплывашка с правильным ответом */
+        .correct-answer-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #ffd700;
+            border-radius: 20px;
+            padding: 25px 35px;
+            z-index: 500;
+            text-align: center;
+            animation: popupShow 2.5s ease forwards;
+            pointer-events: none;
+        }
+
+        @keyframes popupShow {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            15% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+            25% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
+        }
+
+        .correct-answer-popup .label {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .correct-answer-popup .answer-text {
+            color: #ffd700;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .correct-answer-popup .emoji-big {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        /* Всплывашка "Ответа нет" */
+        .no-answer-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #ff99cc;
+            border-radius: 20px;
+            padding: 25px 35px;
+            z-index: 500;
+            text-align: center;
+            animation: popupShow 2.5s ease forwards;
+            pointer-events: none;
+        }
+
+        .no-answer-popup .label {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .no-answer-popup .answer-text {
+            color: #ff99cc;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .no-answer-popup .emoji-big {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        /* Финальная страница */
+        .final-container {
+            display: none;
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .final-heart {
+            font-size: 100px;
+            animation: heartBeat 1s ease-in-out infinite;
+        }
+
+        @keyframes heartBeat {
+            0%, 100% { transform: scale(1); }
+            15% { transform: scale(1.25); }
+            30% { transform: scale(1); }
+        }
+
+        .final-text {
+            color: #ff99cc;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 20px;
+            text-shadow: 0 0 20px rgba(255, 153, 204, 0.6);
+            line-height: 1.4;
+        }
+
+        .final-subtext {
+            color: #ccc;
+            font-size: 16px;
+            margin-top: 15px;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ff99cc;
+            border: 2px solid rgba(255, 153, 204, 0.4);
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 153, 204, 0.15);
+            border-color: #ff6699;
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(255, 102, 153, 0.25);
+        }
+
+        .back-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Секретная панель */
+        .secret-panel {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background: rgba(20, 5, 25, 0.97);
+            backdrop-filter: blur(25px);
+            border-radius: 25px;
+            padding: 35px;
+            border: 2px solid rgba(255, 102, 153, 0.5);
+            box-shadow: 0 0 60px rgba(255, 51, 136, 0.4);
+            max-width: 600px;
+            width: 92%;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: panelIn 0.4s ease;
+        }
+
+        @keyframes panelIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .secret-panel h2 {
+            color: #ff6699;
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .secret-panel .panel-subtitle {
+            color: #aaa;
+            text-align: center;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .history-session {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .history-header {
+            color: #ffd700;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .secret-answer {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border-left: 3px solid #ff6699;
+        }
+
+        .secret-answer .q {
+            color: #ff99cc;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .secret-answer .a {
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .secret-answer .correct {
+            color: #ffd700;
+            font-size: 12px;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .secret-answer .no-answer-label {
+            color: #ff99cc;
+            font-size: 12px;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .no-answers {
+            color: #aaa;
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        .secret-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .secret-close, .clear-history-btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .secret-close {
+            background: #ff6699;
+            color: white;
+        }
+
+        .secret-close:hover {
+            background: #ff4488;
+        }
+
+        .clear-history-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ff6666;
+            border: 1px solid rgba(255, 100, 100, 0.4);
+        }
+
+        .clear-history-btn:hover {
+            background: rgba(255, 50, 50, 0.2);
+            border-color: #ff4444;
+        }
+
+        .secret-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+        }
+
+        /* Пранк-вопрос */
+        .fake-question-glow {
+            color: #ffd700;
+            font-size: 42px;
+            font-weight: bold;
+            animation: prankGlow 0.5s ease-in-out infinite alternate;
+            text-shadow: 0 0 20px #ffd700, 0 0 40px #ff9900, 0 0 60px #ff6600;
+        }
+
+        @keyframes prankGlow {
+            0% { text-shadow: 0 0 20px #ffd700, 0 0 40px #ff9900; transform: scale(1); }
+            100% { text-shadow: 0 0 35px #ffd700, 0 0 60px #ff9900, 0 0 80px #ff6600; transform: scale(1.05); }
+        }
+
+        /* Приветственная страница */
+        .welcome-container {
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 550px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 40px 30px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            animation: containerIn 0.6s ease;
+        }
+
+        .welcome-heart {
+            font-size: 80px;
+            animation: heartBeat 1.2s ease-in-out infinite;
+        }
+
+        .welcome-text {
+            color: #fff;
+            font-size: 20px;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+
+        .start-btn {
+            margin-top: 10px;
+            background: linear-gradient(135deg, #ff6699, #ff3388);
+            color: white;
+            font-size: 20px;
+            padding: 16px 45px;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(255, 51, 136, 0.4);
+        }
+
+        .start-btn:active {
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 500px) {
+            .main-container, .welcome-container { padding: 25px 18px; }
+            h1 { font-size: 22px; }
+            .question-text { font-size: 18px; }
+            .final-text { font-size: 22px; }
+            .welcome-text { font-size: 17px; }
+            .secret-panel { padding: 25px 18px; }
+            .correct-answer-popup, .no-answer-popup { padding: 20px 25px; }
+            .correct-answer-popup .answer-text, .no-answer-popup .answer-text { font-size: 20px; }
+            .fake-question-glow { font-size: 32px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Летающие сердечки фон -->
+    <div class="hearts-bg" id="heartsBg"></div>
+
+    <!-- Секретное сердечко (почти незаметное) -->
+    <div class="secret-heart" id="secretHeart" title="💕">💕</div>
+
+    <!-- Оверлей секретной панели -->
+    <div class="secret-overlay" id="secretOverlay"></div>
+
+    <!-- Секретная панель с историей ответов -->
+    <div class="secret-panel" id="secretPanel">
+        <h2>🔒 История прохождений</h2>
+        <p class="panel-subtitle">Все ответы за каждую попытку</p>
+        <div id="secretAnswersList"></div>
+        <div class="secret-buttons">
+            <button class="clear-history-btn" id="clearHistoryBtn">🗑️ Очистить историю</button>
+            <button class="secret-close" id="secretClose">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Приветственная страница -->
+    <div class="welcome-container" id="welcomeContainer">
+        <div class="welcome-heart">💕</div>
+        <h1>Вопросики от Саши 😁</h1>
+        <p class="subtitle">Только честно отвечать! Я старался, целый сайт забабахал!</p>
+        <p class="welcome-text">
+            Привет! 💖<br>
+            Сейчас ты можешь узнать меня получше.<br>
+            Отвечай честно и от души!<br>
+            Готова? 😊
+        </p>
+        <button class="btn start-btn" id="startBtn">Начать опрос ✨</button>
+    </div>
+
+    <!-- Основной контейнер с вопросами -->
+    <div class="main-container" id="questionContainer" style="display: none;">
+        <div class="header-emoji">💕</div>
+        <h1>Вопросики от Саши 😁</h1>
+        <p class="subtitle">Только честно отвечать! Я старался, целый сайт забабахал!</p>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+        </div>
+        <div class="question-counter" id="questionCounter"></div>
+        <div class="question-text" id="questionText"></div>
+        <textarea class="answer-input" id="answerInput" placeholder="Напиши свой ответ здесь..." rows="2"></textarea>
+        <br>
+        <button class="btn next-btn" id="nextBtn" disabled>Ответить ➜</button>
+    </div>
+
+    <!-- Финальная страница -->
+    <div class="final-container" id="finalContainer">
+        <div class="final-heart">❤️</div>
+        <div class="final-text">Зайди к Санечке<br>и скажи ему, что прошла ❤️❤️❤️</div>
+        <div class="final-subtext">Ты лучшая! 💕</div>
+        <button class="btn back-btn" id="backBtn">🔄 Вернуться на главную</button>
+    </div>
+
+    <script>
+        // ============= ВОПРОСЫ И ПРАВИЛЬНЫЕ ОТВЕТЫ =============
+        const questions = [
+            {
+                question: "Сколько мне лет?",
+                correctAnswer: "15",
+                emoji: "🎂"
+            },
+            {
+                question: "Что мне нравится? (можно в любом плане)",
+                correctAnswer: "Ася ❤️❤️❤️, и волейбол",
+                emoji: "💝"
+            },
+            {
+                question: "Вопрос на засыпку — какие книги я люблю читать?",
+                correctAnswer: "никакие хах а ты что думала?",
+                emoji: "📚"
+            },
+            {
+                question: "Где живёт моя сестра?",
+                correctAnswer: "в Чехии и на Тенерифе",
+                emoji: "🇨🇿"
+            },
+            {
+                question: "Где я родился?",
+                correctAnswer: "во Львове",
+                emoji: "🏙️"
+            },
+            {
+                question: "С какого возраста я занимаюсь волейболом?",
+                correctAnswer: "с 9 лет",
+                emoji: "🏐"
+            },
+            {
+                question: "Каким видом спорта кроме волейбола я занимался?",
+                correctAnswer: "танцы, капоэйра, футбольчик, плавание",
+                emoji: "⚽"
+            },
+            {
+                question: "Как думаешь, кем ты меня видишь в будущем?",
+                correctAnswer: null,
+                emoji: "🔮",
+                noAnswer: true
+            },
+            {
+                question: "Кто я по знаку зодиака?",
+                correctAnswer: "Дева",
+                emoji: "♍"
+            },
+            {
+                question: "В год кого я родился?",
+                correctAnswer: "Тигра) 🐯",
+                emoji: "🐯"
+            },
+            {
+                question: "Какие девочки мне нравятся?",
+                correctAnswer: null,
+                emoji: "💃",
+                noAnswer: true,
+                emptyAnswer: true
+            },
+            {
+                question: "ПРАНК",
+                correctAnswer: null,
+                emoji: "😂",
+                isPrank: true
+            }
+        ];
+
+        let currentQuestion = 0;
+        let currentAnswers = [];
+
+        const questionText = document.getElementById('questionText');
+        const answerInput = document.getElementById('answerInput');
+        const nextBtn = document.getElementById('nextBtn');
+        const questionCounter = document.getElementById('questionCounter');
+        const progressFill = document.getElementById('progressFill');
+        const questionContainer = document.getElementById('questionContainer');
+        const welcomeContainer = document.getElementById('welcomeContainer');
+        const finalContainer = document.getElementById('finalContainer');
+        const startBtn = document.getElementById('startBtn');
+        const backBtn = document.getElementById('backBtn');
+        const secretHeart = document.getElementById('secretHeart');
+        const secretPanel = document.getElementById('secretPanel');
+        const secretOverlay = document.getElementById('secretOverlay');
+        const secretClose = document.getElementById('secretClose');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const secretAnswersList = document.getElementById('secretAnswersList');
+
+        function createFloatingHearts() {
+            const bg = document.getElementById('heartsBg');
+            const hearts = ['❤️', '💕', '💗', '💖', '💘', '💝', '💓', '🩷', '💞', '♥️'];
+            
+            for (let i = 0; i < 40; i++) {
+                const heart = document.createElement('span');
+                heart.className = 'floating-heart';
+                heart.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+                heart.style.left = Math.random() * 100 + '%';
+                heart.style.fontSize = (18 + Math.random() * 30) + 'px';
+                heart.style.animationDuration = (8 + Math.random() * 15) + 's';
+                heart.style.animationDelay = Math.random() * 15 + 's';
+                heart.style.opacity = (0.2 + Math.random() * 0.4);
+                bg.appendChild(heart);
+            }
+        }
+
+        function showAnswerPopup(questionData) {
+            const popup = document.createElement('div');
+            
+            if (questionData.emptyAnswer) {
+                popup.className = 'no-answer-popup';
+                popup.innerHTML = `
+                    <div class="emoji-big">${questionData.emoji}</div>
+                    <div class="label">А вот мой ответ:</div>
+                    <div class="answer-text"></div>
+                `;
+            } else if (questionData.noAnswer) {
+                popup.className = 'no-answer-popup';
+                popup.innerHTML = `
+                    <div class="emoji-big">${questionData.emoji}</div>
+                    <div class="label">А вот мой ответ:</div>
+                    <div class="answer-text">🤷‍♂️ ответа нет, я сам не знаю...</div>
+                `;
+            } else {
+                popup.className = 'correct-answer-popup';
+                popup.innerHTML = `
+                    <div class="emoji-big">${questionData.emoji}</div>
+                    <div class="label">А вот мой ответ:</div>
+                    <div class="answer-text">${questionData.correctAnswer}</div>
+                `;
+            }
+            
+            document.body.appendChild(popup);
+
+            setTimeout(() => {
+                popup.remove();
+            }, 2500);
+        }
+
+        function showPrankQuestion() {
+            questionText.innerHTML = '<span class="fake-question-glow">хо хо хо нету его 😂</span>';
+            questionCounter.textContent = `Вопрос ${currentQuestion + 1} из ${questions.length}`;
+            progressFill.style.width = '100%';
+            answerInput.style.display = 'none';
+            nextBtn.style.display = 'none';
+
+            saveCurrentSessionToHistory();
+
+            setTimeout(() => {
+                questionContainer.style.display = 'none';
+                finalContainer.style.display = 'block';
+                document.body.style.background = 'linear-gradient(135deg, #2d0a31, #1a0a1e)';
+            }, 2500);
+        }
+
+        function getAllHistory() {
+            const history = localStorage.getItem('sashaTestFullHistory');
+            return history ? JSON.parse(history) : [];
+        }
+
+        function saveCurrentSessionToHistory() {
+            if (currentAnswers.length === 0) return;
+            
+            const history = getAllHistory();
+            const session = {
+                id: Date.now(),
+                date: new Date().toLocaleString('ru-RU', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }),
+                answers: [...currentAnswers]
+            };
+            
+            history.push(session);
+            localStorage.setItem('sashaTestFullHistory', JSON.stringify(history));
+        }
+
+        function clearAllHistory() {
+            if (confirm('Точно удалить ВСЮ историю прохождений? Это нельзя отменить.')) {
+                localStorage.removeItem('sashaTestFullHistory');
+                showSecretPanel();
+            }
+        }
+
+        function showQuestion(index) {
+            if (index < questions.length && !questions[index].isPrank) {
+                questionText.textContent = questions[index].question;
+                questionCounter.textContent = `Вопрос ${index + 1} из ${questions.length}`;
+                progressFill.style.width = ((index / (questions.length - 1)) * 100) + '%';
+                answerInput.value = '';
+                nextBtn.disabled = true;
+                answerInput.style.display = 'block';
+                nextBtn.style.display = 'inline-block';
+                nextBtn.textContent = 'Ответить ➜';
+                answerInput.focus();
+            }
+        }
+
+        function saveAnswer() {
+            const answer = answerInput.value.trim();
+            if (answer) {
+                currentAnswers.push({
+                    question: questions[currentQuestion].question,
+                    answer: answer,
+                    correctAnswer: questions[currentQuestion].correctAnswer,
+                    noAnswer: questions[currentQuestion].noAnswer || false,
+                    emptyAnswer: questions[currentQuestion].emptyAnswer || false
+                });
+                return true;
+            }
+            return false;
+        }
+
+        startBtn.addEventListener('click', () => {
+            welcomeContainer.style.display = 'none';
+            questionContainer.style.display = 'block';
+            finalContainer.style.display = 'none';
+            currentQuestion = 0;
+            currentAnswers = [];
+            document.body.style.background = 'linear-gradient(135deg, #1a0a1e, #2d0a31, #1a0a1e)';
+            showQuestion(currentQuestion);
+        });
+
+        backBtn.addEventListener('click', () => {
+            finalContainer.style.display = 'none';
+            welcomeContainer.style.display = 'block';
+            document.body.style.background = 'linear-gradient(135deg, #1a0a1e, #2d0a31, #1a0a1e)';
+        });
+
+        answerInput.addEventListener('input', () => {
+            nextBtn.disabled = answerInput.value.trim() === '';
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (saveAnswer()) {
+                showAnswerPopup(questions[currentQuestion]);
+                
+                nextBtn.disabled = true;
+                answerInput.disabled = true;
+                
+                setTimeout(() => {
+                    answerInput.disabled = false;
+                    currentQuestion++;
+                    
+                    if (currentQuestion < questions.length) {
+                        if (questions[currentQuestion].isPrank) {
+                            showPrankQuestion();
+                        } else {
+                            showQuestion(currentQuestion);
+                        }
+                    }
+                }, 2600);
+            }
+        });
+
+        answerInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !nextBtn.disabled && answerInput.value.trim() !== '') {
+                e.preventDefault();
+                nextBtn.click();
+            }
+        });
+
+        function showSecretPanel() {
+            const history = getAllHistory();
+            
+            if (history.length === 0) {
+                secretAnswersList.innerHTML = '<div class="no-answers">💕 Пока нет прохождений...<br>Девушка ещё не прошла тест ни разу</div>';
+            } else {
+                let html = '';
+                
+                history.slice().reverse().forEach((session, reverseIndex) => {
+                    const sessionNumber = history.length - reverseIndex;
+                    html += `
+                        <div class="history-session">
+                            <div class="history-header">
+                                📅 Прохождение #${sessionNumber} — ${session.date}
+                            </div>
+                    `;
+                    
+                    session.answers.forEach((item) => {
+                        let correctHtml = '';
+                        if (item.emptyAnswer) {
+                            correctHtml = '<div class="no-answer-label">🤷‍♂️ У этого вопроса нет ответа</div>';
+                        } else if (item.noAnswer) {
+                            correctHtml = '<div class="no-answer-label">🤷‍♂️ У этого вопроса нет ответа</div>';
+                        } else if (item.correctAnswer) {
+                            correctHtml = `<div class="correct">✅ Мой ответ: ${item.correctAnswer}</div>`;
+                        }
+                        
+                        html += `
+                            <div class="secret-answer">
+                                <div class="q">📝 ${item.question}</div>
+                                <div class="a">💬 Её ответ: ${item.answer}</div>
+                                ${correctHtml}
+                            </div>
+                        `;
+                    });
+                    
+                    html += `</div>`;
+                });
+                
+                secretAnswersList.innerHTML = html;
+            }
+
+            secretPanel.style.display = 'block';
+            secretOverlay.style.display = 'block';
+        }
+
+        function hideSecretPanel() {
+            secretPanel.style.display = 'none';
+            secretOverlay.style.display = 'none';
+        }
+
+        secretHeart.addEventListener('click', showSecretPanel);
+        secretClose.addEventListener('click', hideSecretPanel);
+        secretOverlay.addEventListener('click', hideSecretPanel);
+        clearHistoryBtn.addEventListener('click', clearAllHistory);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') hideSecretPanel();
+        });
+
+        function init() {
+            createFloatingHearts();
+            
+            welcomeContainer.style.display = 'block';
+            questionContainer.style.display = 'none';
+            finalContainer.style.display = 'none';
+        }
+
+        init();
+    </script>
+</body>
+</html>
