@@ -21,7 +21,6 @@
             transition: background 1s ease;
         }
 
-        /* Летающие сердечки на фоне */
         .hearts-bg {
             position: fixed;
             top: 0; left: 0;
@@ -50,7 +49,6 @@
             }
         }
 
-        /* Секретное сердечко — чуть заметное */
         .secret-heart {
             position: fixed;
             bottom: 25px;
@@ -77,7 +75,6 @@
             50% { opacity: 0.22; transform: scale(1.08); }
         }
 
-        /* Основной контейнер */
         .main-container {
             position: relative;
             z-index: 10;
@@ -210,7 +207,6 @@
             box-shadow: none;
         }
 
-        /* Всплывашка с правильным ответом */
         .correct-answer-popup {
             position: fixed;
             top: 50%;
@@ -251,7 +247,6 @@
             margin-bottom: 10px;
         }
 
-        /* Всплывашка "Ответа нет" */
         .no-answer-popup {
             position: fixed;
             top: 50%;
@@ -284,7 +279,6 @@
             margin-bottom: 10px;
         }
 
-        /* Финальная страница */
         .final-container {
             display: none;
             position: relative;
@@ -343,7 +337,6 @@
             transform: scale(0.95);
         }
 
-        /* Секретная панель */
         .secret-panel {
             display: none;
             position: fixed;
@@ -449,7 +442,7 @@
             flex-wrap: wrap;
         }
 
-        .secret-close, .clear-history-btn {
+        .secret-close, .refresh-history-btn {
             padding: 10px 25px;
             border: none;
             border-radius: 20px;
@@ -468,15 +461,15 @@
             background: #ff4488;
         }
 
-        .clear-history-btn {
+        .refresh-history-btn {
             background: rgba(255, 255, 255, 0.1);
-            color: #ff6666;
-            border: 1px solid rgba(255, 100, 100, 0.4);
+            color: #ff99cc;
+            border: 1px solid rgba(255, 153, 204, 0.4);
         }
 
-        .clear-history-btn:hover {
-            background: rgba(255, 50, 50, 0.2);
-            border-color: #ff4444;
+        .refresh-history-btn:hover {
+            background: rgba(255, 153, 204, 0.15);
+            border-color: #ff6699;
         }
 
         .secret-overlay {
@@ -488,7 +481,6 @@
             z-index: 999;
         }
 
-        /* Пранк-вопрос */
         .fake-question-glow {
             color: #ffd700;
             font-size: 42px;
@@ -502,7 +494,6 @@
             100% { text-shadow: 0 0 35px #ffd700, 0 0 60px #ff9900, 0 0 80px #ff6600; transform: scale(1.05); }
         }
 
-        /* Приветственная страница */
         .welcome-container {
             position: relative;
             z-index: 10;
@@ -562,27 +553,24 @@
 </head>
 <body>
 
-    <!-- Летающие сердечки фон -->
     <div class="hearts-bg" id="heartsBg"></div>
 
-    <!-- Секретное сердечко (почти незаметное) -->
     <div class="secret-heart" id="secretHeart" title="💕">💕</div>
 
-    <!-- Оверлей секретной панели -->
     <div class="secret-overlay" id="secretOverlay"></div>
 
-    <!-- Секретная панель с историей ответов -->
     <div class="secret-panel" id="secretPanel">
         <h2>🔒 История прохождений</h2>
-        <p class="panel-subtitle">Все ответы за каждую попытку</p>
-        <div id="secretAnswersList"></div>
+        <p class="panel-subtitle">Все ответы, со всех устройств</p>
+        <div id="secretAnswersList">
+            <div class="no-answers">⏳ Загрузка...</div>
+        </div>
         <div class="secret-buttons">
-            <button class="clear-history-btn" id="clearHistoryBtn">🗑️ Очистить историю</button>
+            <button class="refresh-history-btn" id="refreshHistoryBtn">🔄 Обновить</button>
             <button class="secret-close" id="secretClose">Закрыть</button>
         </div>
     </div>
 
-    <!-- Приветственная страница -->
     <div class="welcome-container" id="welcomeContainer">
         <div class="welcome-heart">💕</div>
         <h1>Вопросики от Саши 😁</h1>
@@ -596,7 +584,6 @@
         <button class="btn start-btn" id="startBtn">Начать опрос ✨</button>
     </div>
 
-    <!-- Основной контейнер с вопросами -->
     <div class="main-container" id="questionContainer" style="display: none;">
         <div class="header-emoji">💕</div>
         <h1>Вопросики от Саши 😁</h1>
@@ -611,7 +598,6 @@
         <button class="btn next-btn" id="nextBtn" disabled>Ответить ➜</button>
     </div>
 
-    <!-- Финальная страница -->
     <div class="final-container" id="finalContainer">
         <div class="final-heart">❤️</div>
         <div class="final-text">Зайди к Санечке<br>и скажи ему, что прошла ❤️❤️❤️</div>
@@ -620,6 +606,9 @@
     </div>
 
     <script>
+        // ============= НАСТРОЙКИ GOOGLE APPS SCRIPT =============
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwz_vJp1ViB67_Vi4bnGsXZIX9EzdFKbDmrL7p-Y7-S2RgJ82nsimVGfUhWI4i9n2FO4g/exec";
+
         // ============= ВОПРОСЫ И ПРАВИЛЬНЫЕ ОТВЕТЫ =============
         const questions = [
             {
@@ -691,6 +680,7 @@
         let currentQuestion = 0;
         let currentAnswers = [];
         let testCompleted = false;
+        const sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
 
         const questionText = document.getElementById('questionText');
         const answerInput = document.getElementById('answerInput');
@@ -706,88 +696,41 @@
         const secretPanel = document.getElementById('secretPanel');
         const secretOverlay = document.getElementById('secretOverlay');
         const secretClose = document.getElementById('secretClose');
-        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const refreshHistoryBtn = document.getElementById('refreshHistoryBtn');
         const secretAnswersList = document.getElementById('secretAnswersList');
 
-        // ============= ОТПРАВКА НА ПОЧТУ =============
-        function sendAnswersToEmail() {
-            // Формируем текст письма
-            let emailBody = '💕 Новые ответы на вопросики от Саши!\n';
-            emailBody += '━━━━━━━━━━━━━━━━━━━━━━\n\n';
-            
-            currentAnswers.forEach((item, index) => {
-                emailBody += `❓ Вопрос ${index + 1}: ${item.question}\n`;
-                emailBody += `💬 Её ответ: ${item.answer}\n`;
-                
-                if (item.correctAnswer && !item.noAnswer) {
-                    emailBody += `✅ Мой ответ: ${item.correctAnswer}\n`;
-                } else if (item.emptyAnswer) {
-                    emailBody += `✅ Мой ответ: (пусто)\n`;
-                } else if (item.noAnswer) {
-                    emailBody += `✅ Мой ответ: ответа нет\n`;
-                }
-                
-                emailBody += '\n';
-            });
-            
-            emailBody += '━━━━━━━━━━━━━━━━━━━━━━\n';
-            emailBody += '📅 ' + new Date().toLocaleString('ru-RU');
-            
-            // Отправляем через Formspree
-            const formData = new FormData();
-            formData.append('email', 'mishin.aleksandr.23@gmail.com');
-            formData.append('subject', '💕 Ответы на вопросики от Саши');
-            formData.append('message', emailBody);
-            
-            fetch('https://formspree.io/f/xbdvrbkz', {
+        // ============= ОТПРАВКА В GOOGLE SHEETS =============
+        function sendAnswersToSheet(status) {
+            if (currentAnswers.length === 0) return;
+
+            const payload = {
+                sessionId: sessionId,
+                date: new Date().toLocaleString('ru-RU'),
+                status: status,
+                answers: currentAnswers.map(item => ({
+                    question: item.question,
+                    answer: item.answer,
+                    correctAnswer: item.emptyAnswer ? '(пусто)' : (item.noAnswer ? 'ответа нет' : (item.correctAnswer || ''))
+                }))
+            };
+
+            // text/plain избегает preflight-запроса, который Apps Script не обрабатывает корректно
+            fetch(SCRIPT_URL, {
                 method: 'POST',
-                body: formData,
-                headers: {
-                    'Accept': 'application/json'
-                }
-            })
-            .then(response => {
-                if (response.ok) {
-                    console.log('✅ Ответы отправлены на почту!');
-                } else {
-                    console.log('❌ Ошибка отправки');
-                }
-            })
-            .catch(error => {
-                console.log('Ошибка:', error);
-            });
-        }
-
-        // ============= ОТПРАВКА ПРИ ЗАКРЫТИИ СТРАНИЦЫ ДО КОНЦА =============
-        function sendPartialAnswersOnUnload() {
-            if (testCompleted || currentAnswers.length === 0) return;
-
-            let emailBody = '⚠️ Анкета закрыта НЕ до конца!\n';
-            emailBody += '━━━━━━━━━━━━━━━━━━━━━━\n\n';
-
-            currentAnswers.forEach((item, index) => {
-                emailBody += `❓ Вопрос ${index + 1}: ${item.question}\n`;
-                emailBody += `💬 Её ответ: ${item.answer}\n\n`;
-            });
-
-            emailBody += '━━━━━━━━━━━━━━━━━━━━━━\n';
-            emailBody += '📅 ' + new Date().toLocaleString('ru-RU');
-
-            const formData = new FormData();
-            formData.append('email', 'mishin.aleksandr.23@gmail.com');
-            formData.append('subject', '⚠️ Анкета закрыта частично');
-            formData.append('message', emailBody);
-
-            fetch('https://formspree.io/f/xbdvrbkz', {
-                method: 'POST',
-                body: formData,
-                headers: { 'Accept': 'application/json' },
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload),
                 keepalive: true
+            }).catch(error => {
+                console.log('Ошибка отправки в Google Sheets:', error);
             });
         }
 
-        window.addEventListener('beforeunload', sendPartialAnswersOnUnload);
-        window.addEventListener('pagehide', sendPartialAnswersOnUnload);
+        window.addEventListener('beforeunload', () => {
+            if (!testCompleted) sendAnswersToSheet('Прервано');
+        });
+        window.addEventListener('pagehide', () => {
+            if (!testCompleted) sendAnswersToSheet('Прервано');
+        });
 
         function createFloatingHearts() {
             const bg = document.getElementById('heartsBg');
@@ -846,48 +789,14 @@
             answerInput.style.display = 'none';
             nextBtn.style.display = 'none';
 
-            saveCurrentSessionToHistory();
-
             testCompleted = true;
-            sendAnswersToEmail();
+            sendAnswersToSheet('Завершено');
 
             setTimeout(() => {
                 questionContainer.style.display = 'none';
                 finalContainer.style.display = 'block';
                 document.body.style.background = 'linear-gradient(135deg, #2d0a31, #1a0a1e)';
             }, 2500);
-        }
-
-        function getAllHistory() {
-            const history = localStorage.getItem('sashaTestFullHistory');
-            return history ? JSON.parse(history) : [];
-        }
-
-        function saveCurrentSessionToHistory() {
-            if (currentAnswers.length === 0) return;
-            
-            const history = getAllHistory();
-            const session = {
-                id: Date.now(),
-                date: new Date().toLocaleString('ru-RU', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                }),
-                answers: [...currentAnswers]
-            };
-            
-            history.push(session);
-            localStorage.setItem('sashaTestFullHistory', JSON.stringify(history));
-        }
-
-        function clearAllHistory() {
-            if (confirm('Точно удалить ВСЮ историю прохождений? Это нельзя отменить.')) {
-                localStorage.removeItem('sashaTestFullHistory');
-                showSecretPanel();
-            }
         }
 
         function showQuestion(index) {
@@ -969,33 +878,49 @@
             }
         });
 
-        function showSecretPanel() {
-            const history = getAllHistory();
-            
-            if (history.length === 0) {
-                secretAnswersList.innerHTML = '<div class="no-answers">💕 Пока нет прохождений...<br>Девушка ещё не прошла тест ни разу</div>';
-            } else {
+        // ============= СЕКРЕТНАЯ ПАНЕЛЬ — ЗАГРУЗКА ИЗ GOOGLE SHEETS =============
+        async function loadHistoryFromSheet() {
+            secretAnswersList.innerHTML = '<div class="no-answers">⏳ Загрузка...</div>';
+
+            try {
+                const response = await fetch(SCRIPT_URL, { method: 'GET' });
+                const rows = await response.json();
+
+                if (!rows || rows.length === 0) {
+                    secretAnswersList.innerHTML = '<div class="no-answers">💕 Пока нет прохождений...<br>Девушка ещё не прошла тест ни разу</div>';
+                    return;
+                }
+
+                // Группируем строки по sessionId
+                const sessions = {};
+                rows.forEach(row => {
+                    if (!sessions[row.sessionId]) {
+                        sessions[row.sessionId] = { date: row.date, status: row.status, answers: [] };
+                    }
+                    sessions[row.sessionId].answers.push(row);
+                });
+
+                const sessionList = Object.values(sessions).reverse();
+
                 let html = '';
-                
-                history.slice().reverse().forEach((session, reverseIndex) => {
-                    const sessionNumber = history.length - reverseIndex;
+                sessionList.forEach((session, idx) => {
+                    const sessionNumber = sessionList.length - idx;
+                    const statusLabel = session.status === 'Завершено' ? '✅' : '⚠️ не до конца';
                     html += `
                         <div class="history-session">
                             <div class="history-header">
-                                📅 Прохождение #${sessionNumber} — ${session.date}
+                                📅 Прохождение #${sessionNumber} — ${session.date} ${statusLabel}
                             </div>
                     `;
-                    
-                    session.answers.forEach((item) => {
+
+                    session.answers.forEach(item => {
                         let correctHtml = '';
-                        if (item.emptyAnswer) {
-                            correctHtml = '<div class="no-answer-label">🤷‍♂️ У этого вопроса нет ответа</div>';
-                        } else if (item.noAnswer) {
-                            correctHtml = '<div class="no-answer-label">🤷‍♂️ У этого вопроса нет ответа</div>';
+                        if (item.correctAnswer === 'ответа нет' || item.correctAnswer === '(пусто)') {
+                            correctHtml = `<div class="no-answer-label">🤷‍♂️ У этого вопроса нет ответа</div>`;
                         } else if (item.correctAnswer) {
                             correctHtml = `<div class="correct">✅ Мой ответ: ${item.correctAnswer}</div>`;
                         }
-                        
+
                         html += `
                             <div class="secret-answer">
                                 <div class="q">📝 ${item.question}</div>
@@ -1004,15 +929,21 @@
                             </div>
                         `;
                     });
-                    
+
                     html += `</div>`;
                 });
-                
-                secretAnswersList.innerHTML = html;
-            }
 
+                secretAnswersList.innerHTML = html;
+            } catch (error) {
+                secretAnswersList.innerHTML = '<div class="no-answers">❌ Не удалось загрузить историю.<br>Проверьте подключение к интернету.</div>';
+                console.log('Ошибка загрузки истории:', error);
+            }
+        }
+
+        function showSecretPanel() {
             secretPanel.style.display = 'block';
             secretOverlay.style.display = 'block';
+            loadHistoryFromSheet();
         }
 
         function hideSecretPanel() {
@@ -1023,7 +954,7 @@
         secretHeart.addEventListener('click', showSecretPanel);
         secretClose.addEventListener('click', hideSecretPanel);
         secretOverlay.addEventListener('click', hideSecretPanel);
-        clearHistoryBtn.addEventListener('click', clearAllHistory);
+        refreshHistoryBtn.addEventListener('click', loadHistoryFromSheet);
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') hideSecretPanel();
