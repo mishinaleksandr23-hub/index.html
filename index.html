@@ -708,6 +708,55 @@
         const clearHistoryBtn = document.getElementById('clearHistoryBtn');
         const secretAnswersList = document.getElementById('secretAnswersList');
 
+        // ============= ОТПРАВКА НА ПОЧТУ =============
+        function sendAnswersToEmail() {
+            // Формируем текст письма
+            let emailBody = '💕 Новые ответы на вопросики от Саши!\n';
+            emailBody += '━━━━━━━━━━━━━━━━━━━━━━\n\n';
+            
+            currentAnswers.forEach((item, index) => {
+                emailBody += `❓ Вопрос ${index + 1}: ${item.question}\n`;
+                emailBody += `💬 Её ответ: ${item.answer}\n`;
+                
+                if (item.correctAnswer && !item.noAnswer) {
+                    emailBody += `✅ Мой ответ: ${item.correctAnswer}\n`;
+                } else if (item.emptyAnswer) {
+                    emailBody += `✅ Мой ответ: (пусто)\n`;
+                } else if (item.noAnswer) {
+                    emailBody += `✅ Мой ответ: ответа нет\n`;
+                }
+                
+                emailBody += '\n';
+            });
+            
+            emailBody += '━━━━━━━━━━━━━━━━━━━━━━\n';
+            emailBody += '📅 ' + new Date().toLocaleString('ru-RU');
+            
+            // Отправляем через Formspree
+            const formData = new FormData();
+            formData.append('email', 'mishin.aleksandr.23@gmail.com');
+            formData.append('subject', '💕 Ответы на вопросики от Саши');
+            formData.append('message', emailBody);
+            
+            fetch('https://formspree.io/f/xwpvqrnz', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('✅ Ответы отправлены на почту!');
+                } else {
+                    console.log('❌ Ошибка отправки');
+                }
+            })
+            .catch(error => {
+                console.log('Ошибка:', error);
+            });
+        }
+
         function createFloatingHearts() {
             const bg = document.getElementById('heartsBg');
             const hearts = ['❤️', '💕', '💗', '💖', '💘', '💝', '💓', '🩷', '💞', '♥️'];
@@ -766,6 +815,9 @@
             nextBtn.style.display = 'none';
 
             saveCurrentSessionToHistory();
+            
+            // Отправляем ответы на почту
+            sendAnswersToEmail();
 
             setTimeout(() => {
                 questionContainer.style.display = 'none';
